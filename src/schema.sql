@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS Token (
     image TEXT NOT NULL,
     description TEXT NOT NULL,
     isApproved INTEGER DEFAULT 0,           -- 0 = false, 1 = true
+    creator TEXT NOT NULL,
     createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
     updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
 );
