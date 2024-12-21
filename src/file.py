@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import boto3
 import botocore
-from flask import Blueprint, request, flash, redirect, g, current_app
+from flask import Blueprint, request, flash, redirect, current_app
 from werkzeug.utils import secure_filename
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
