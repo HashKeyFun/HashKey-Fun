@@ -31,9 +31,12 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from . import db, file
+    from . import db, file, token, trade, chart
     db.init_app(app)
 
     app.register_blueprint(file.bp)
-
+    app.register_blueprint(token.bp)
+    app.register_blueprint(trade.bp)
+    app.register_blueprint(chart.bp)
+    
     return app
