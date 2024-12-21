@@ -9,6 +9,7 @@ def read_token():
     request_id = request.args.get('request_id')
     contract_address = request.args.get('contract_address')
     is_approved = request.args.get('isApproved')
+    creator = request.args.get('creator')
     
     db = get_db()
     query = 'SELECT * FROM Token WHERE 1=1'
@@ -23,7 +24,10 @@ def read_token():
     if is_approved is not None:
         query += ' AND isApproved = ?'
         params.append(1 if is_approved == 'true' else 0)
-    
+    if creator:
+        query += ' AND creator = ?'
+        params.append(creator)
+        
     token = db.execute(query, params).fetchone()
     
     if token is None:
@@ -35,6 +39,7 @@ def read_token():
         "image": token['image'],
         "description": token['description'],
         "isApproved": token['isApproved'],
+        "creator": token['creator'],
         "createdAt": token['createdAt'],
         "updatedAt": token['updatedAt']
     })
@@ -43,7 +48,7 @@ def read_token():
 @bp.route('all', methods=['GET'])
 def read_token_all():
     is_approved = request.args.get('isApproved')
-    
+    creator = request.args.get('creator')
     db = get_db()
     query = 'SELECT * FROM Token WHERE 1=1'
     params = []
@@ -51,6 +56,9 @@ def read_token_all():
     if is_approved is not None:
         query += ' AND isApproved = ?'
         params.append(1 if is_approved == 'true' else 0)
+    if creator:
+        query += ' AND creator = ?'
+        params.append(creator)
     
     tokens = db.execute(query, params).fetchall()
     
@@ -60,6 +68,7 @@ def read_token_all():
         "image": token['image'],
         "description": token['description'],
         "isApproved": token['isApproved'],
+        "creator": token['creator'],
         "createdAt": token['createdAt'],
         "updatedAt": token['updatedAt']
     } for token in tokens])
@@ -71,11 +80,12 @@ def create_token():
     request_id = data.get('request_id')
     image = data.get('image')
     description = data.get('description')
+    creator = data.get('creator')
     
     db = get_db()
     db.execute(
-        'INSERT INTO Token (request_id, image, description) VALUES (?, ?, ?)',
-        (request_id, image, description)
+        'INSERT INTO Token (request_id, image, description, creator) VALUES (?, ?, ?, ?)',
+        (request_id, image, description, creator)
     )
     db.commit()
 
@@ -103,6 +113,7 @@ def create_token():
         "image": token['image'],
         "description": token['description'],
         "isApproved": token['isApproved'],
+        "creator": token['creator'],
         "createdAt": token['createdAt'],
         "updatedAt": token['updatedAt']
     }), 201
@@ -116,11 +127,12 @@ def update_token():
     description = data.get('description')
     isApproved = data.get('isApproved', False)
     contract_address = data.get('contract_address')
+    creator = data.get('creator')
     
     db = get_db()
     db.execute(
-        'UPDATE Token SET image = ?, description = ?, isApproved = ?, contract_address = ?, updatedAt = CURRENT_TIMESTAMP WHERE request_id = ?',
-        (image, description, isApproved, contract_address, request_id)
+        'UPDATE Token SET image = ?, description = ?, isApproved = ?, contract_address = ?, creator = ?, updatedAt = CURRENT_TIMESTAMP WHERE request_id = ?',
+        (image, description, isApproved, contract_address, creator, request_id)
     )
     db.commit()
     
@@ -134,6 +146,7 @@ def update_token():
         "image": token['image'],
         "description": token['description'],
         "isApproved": token['isApproved'],
+        "creator": token['creator'],
         "createdAt": token['createdAt'],
         "updatedAt": token['updatedAt']
     })
