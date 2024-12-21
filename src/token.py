@@ -78,6 +78,20 @@ def create_token():
         (request_id, image, description)
     )
     db.commit()
+
+    # Call the external API
+    response = requests.post('http://0.0.0.0:8000/approve', json={"request_id": request_id, "description": description})
+    result = response.json().get('result', {})
+    violentness = result.get('violentness', 0)
+    sensationality = result.get('sensationality', 0)
+
+    is_approved = 1 if violentness <= 60 and sensationality <= 60 else 0
+    
+    db.execute(
+        'UPDATE Token SET isApproved = ? WHERE request_id = ?',
+        (is_approved, request_id)
+    )
+    db.commit()
     
     token = db.execute(
         'SELECT * FROM Token WHERE request_id = ?', (request_id,)
