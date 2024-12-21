@@ -8,17 +8,23 @@ bp = Blueprint('token', __name__, url_prefix='/token')
 def read_token():
     request_id = request.args.get('request_id')
     contract_address = request.args.get('contract_address')
+    is_approved = request.args.get('isApproved')
     
     db = get_db()
-    token = None
+    query = 'SELECT * FROM Token WHERE 1=1'
+    params = []
+    
     if request_id:
-        token = db.execute(
-            'SELECT * FROM tokens WHERE request_id = ?', (request_id,)
-        ).fetchone()
-    elif contract_address:
-        token = db.execute(
-            'SELECT * FROM tokens WHERE contract_address = ?', (contract_address,)
-        ).fetchone()
+        query += ' AND request_id = ?'
+        params.append(request_id)
+    if contract_address:
+        query += ' AND contract_address = ?'
+        params.append(contract_address)
+    if is_approved is not None:
+        query += ' AND isApproved = ?'
+        params.append(1 if is_approved == 'true' else 0)
+    
+    token = db.execute(query, params).fetchone()
     
     if token is None:
         return jsonify({"error": "Token not found"}), 404
@@ -27,20 +33,35 @@ def read_token():
         "request_id": token['request_id'],
         "contract_address": token['contract_address'],
         "image": token['image'],
-        "description": token['description']
+        "description": token['description'],
+        "isApproved": token['isApproved'],
+        "createdAt": token['createdAt'],
+        "updatedAt": token['updatedAt']
     })
 
 
 @bp.route('all', methods=['GET'])
 def read_token_all():
+    is_approved = request.args.get('isApproved')
+    
     db = get_db()
-    tokens = db.execute('SELECT * FROM tokens').fetchall()
+    query = 'SELECT * FROM Token WHERE 1=1'
+    params = []
+    
+    if is_approved is not None:
+        query += ' AND isApproved = ?'
+        params.append(1 if is_approved == 'true' else 0)
+    
+    tokens = db.execute(query, params).fetchall()
     
     return jsonify([{
         "request_id": token['request_id'],
         "contract_address": token['contract_address'],
         "image": token['image'],
-        "description": token['description']
+        "description": token['description'],
+        "isApproved": token['isApproved'],
+        "createdAt": token['createdAt'],
+        "updatedAt": token['updatedAt']
     } for token in tokens])
 
 
@@ -53,16 +74,23 @@ def create_token():
     
     db = get_db()
     db.execute(
-        'INSERT INTO tokens (request_id, image, description) VALUES (?, ?, ?)',
+        'INSERT INTO Token (request_id, image, description) VALUES (?, ?, ?)',
         (request_id, image, description)
     )
     db.commit()
     
+    token = db.execute(
+        'SELECT * FROM Token WHERE request_id = ?', (request_id,)
+    ).fetchone()
+    
     return jsonify({
-        "request_id": request_id,
-        "contract_address": None,
-        "image": image,
-        "description": description
+        "request_id": token['request_id'],
+        "contract_address": token['contract_address'],
+        "image": token['image'],
+        "description": token['description'],
+        "isApproved": token['isApproved'],
+        "createdAt": token['createdAt'],
+        "updatedAt": token['updatedAt']
     }), 201
 
 
@@ -72,21 +100,26 @@ def update_token():
     request_id = data.get('request_id')
     image = data.get('image')
     description = data.get('description')
+    isApproved = data.get('isApproved', False)
+    contract_address = data.get('contract_address')
     
     db = get_db()
     db.execute(
-        'UPDATE tokens SET image = ?, description = ? WHERE request_id = ?',
-        (image, description, request_id)
+        'UPDATE Token SET image = ?, description = ?, isApproved = ?, contract_address = ?, updatedAt = CURRENT_TIMESTAMP WHERE request_id = ?',
+        (image, description, isApproved, contract_address, request_id)
     )
     db.commit()
     
     token = db.execute(
-        'SELECT * FROM tokens WHERE request_id = ?', (request_id,)
+        'SELECT * FROM Token WHERE request_id = ?', (request_id,)
     ).fetchone()
     
     return jsonify({
         "request_id": token['request_id'],
         "contract_address": token['contract_address'],
         "image": token['image'],
-        "description": token['description']
+        "description": token['description'],
+        "isApproved": token['isApproved'],
+        "createdAt": token['createdAt'],
+        "updatedAt": token['updatedAt']
     })
